@@ -48,7 +48,9 @@ namespace Extensions
                     disjointSets.Add(disjointCopy);
                 }
             }
-            return disjointSets;
+
+            return disjointSets
+                .Where(s => s.Any()).ToArray();
         }
 
         #endregion Public Methods
