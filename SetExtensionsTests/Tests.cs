@@ -21,7 +21,7 @@ namespace SetExtensionsTests
 
             var sets = new List<int[]>() { set1, set2 };
 
-            var result = SetExtensions.Extensions.Segemented(sets).ToArray();
+            var result = SetExtensions.Extensions.Segmented(sets).ToArray();
 
             Assert.IsTrue(result.Count() == 3);
 

@@ -12,7 +12,7 @@ namespace SetExtensions
         /// </summary>
         /// <param name="sets">Given sets of T</param>
         /// <returns>Non-intersecting sets of the given sets</returns>
-        public static IEnumerable<IEnumerable<T>> Segemented<T>(this IEnumerable<IEnumerable<T>> sets)
+        public static IEnumerable<IEnumerable<T>> Segmented<T>(this IEnumerable<IEnumerable<T>> sets)
         {
             var disjointSets = new List<List<T>>();
 
