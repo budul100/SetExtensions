@@ -7,7 +7,12 @@ namespace SetExtensions
     {
         #region Public Methods
 
-        public static IEnumerable<IEnumerable<T>> MinimumNonIntersectingSets<T>(this IEnumerable<IEnumerable<T>> sets)
+        /// <summary>
+        /// Gets all non-intersecting sets of the given amount sets.
+        /// </summary>
+        /// <param name="sets">Given sets of T</param>
+        /// <returns>Non-intersecting sets of the given sets</returns>
+        public static IEnumerable<IEnumerable<T>> Segemented<T>(this IEnumerable<IEnumerable<T>> sets)
         {
             var disjointSets = new List<List<T>>();
 
@@ -15,32 +20,41 @@ namespace SetExtensions
             if (sets.Any(s => !s.Any()))
             {
                 disjointSets.Add(new List<T>());
-                sets = sets.Where(s => s.Any());
+
+                sets = sets
+                    .Where(s => s.Any()).ToArray();
             }
 
-            foreach (IEnumerable<T> newSet in sets)
+            foreach (var set in sets)
             {
-                var disjointCopy = newSet.ToList();
-                var i = 0;
+                var disjointCopy = set.ToList();
+                var index = 0;
 
-                while (i < disjointSets.Count())
+                while (index < disjointSets.Count())
                 {
-                    var intersection = disjointSets[i].Intersect(disjointCopy).ToList();
+                    var intersection = disjointSets[index]
+                        .Intersect(disjointCopy).ToList();
 
                     if ((intersection.Count() == disjointCopy.Count())
-                        && (intersection.Count() == disjointSets[i].Count())) // They are equal
+                        && (intersection.Count() == disjointSets[index].Count())) // They are equal
                     {
                         disjointCopy.Clear();
                         break;
                     }
+
                     if (intersection.Any())
                     {
-                        disjointSets[i] = disjointSets[i].Except(intersection).ToList();
-                        disjointSets.Insert(++i, intersection);
-                        disjointCopy = disjointCopy.Except(intersection).ToList();
+                        disjointSets[index] = disjointSets[index]
+                            .Except(intersection).ToList();
+                        disjointSets.Insert(
+                            index: ++index,
+                            item: intersection);
+
+                        disjointCopy = disjointCopy
+                            .Except(intersection).ToList();
                     }
 
-                    ++i;
+                    ++index;
                 }
 
                 if (disjointCopy.Any())
@@ -49,76 +63,12 @@ namespace SetExtensions
                 }
             }
 
-            return disjointSets
+            var result = disjointSets
                 .Where(s => s.Any()).ToArray();
-        }
 
-        public static IEnumerable<IEnumerable<T>> Segmented<T>(this IEnumerable<IEnumerable<T>> sets)
-        {
-            var given = sets?
-                .SelectMany(g => g)
-                .Where(g => !g.IsDefault()).ToArray();
-
-            while (given?.Any() ?? false)
-            {
-                given = given
-                    .OrderBy(b => b)
-                    .ToArray();
-
-                var result = sets.GetGroups(given)
-                    .Distinct().ToArray();
-
-                yield return result;
-
-                given = given
-                    .Except(result)
-                    .ToArray();
-            }
+            return result;
         }
 
         #endregion Public Methods
-
-        #region Private Methods
-
-        private static IEnumerable<T> GetGroups<T>(this IEnumerable<IEnumerable<T>> allGroups, IEnumerable<T> items)
-        {
-            var givenGroups = allGroups
-                .Where(g => g.Contains(items.First()))
-                .ToArray();
-
-            foreach (var item in items)
-            {
-                var newGroups = allGroups
-                    .Where(g => g.Contains(item)).ToArray();
-
-                if (newGroups.Count() == givenGroups.Count())
-                {
-                    var index = 0;
-                    while (index < newGroups.Count())
-                    {
-                        if (!newGroups[index].SequenceEqual(givenGroups[index]))
-                        {
-                            break;
-                        }
-
-                        index++;
-                    }
-
-                    if (index == newGroups.Count())
-                    {
-                        yield return item;
-                    }
-                }
-            }
-        }
-
-        private static bool IsDefault<T>(this T x)
-        {
-            return EqualityComparer<T>.Default.Equals(
-                x: x,
-                y: default);
-        }
-
-        #endregion Private Methods
     }
 }
