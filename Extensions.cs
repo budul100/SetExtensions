@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Extensions
+namespace SetExtensions
 {
-    public static class SetExtensions
+    public static class Extensions
     {
         #region Public Methods
 
