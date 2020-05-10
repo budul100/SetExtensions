@@ -8,13 +8,8 @@ namespace SetExtensionsTests
     {
         #region Public Methods
 
-        [SetUp]
-        public void Setup()
-        {
-        }
-
         [Test]
-        public void TestSegmentation()
+        public void SegmentValues()
         {
             var set1 = new int[] { 1, 2, 3 };
             var set2 = new int[] { 2, 3, 4 };
