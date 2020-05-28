@@ -12,9 +12,12 @@ namespace SetExtensionsTests
         public void SegmentValues()
         {
             var set1 = new int[] { 1, 2, 3 };
-            var set2 = new int[] { 2, 3, 4 };
+            var set2 = new int[] { 1, 1, 2, 2, 3, 3 };
+            var set3 = new int[] { 2, 3, 4 };
+            var set4 = new int[] { 4, 3, 2 };
+            var set5 = System.Array.Empty<int>();
 
-            var sets = new List<int[]>() { set1, set2 };
+            var sets = new List<int[]>() { set1, set2, set3, set4, set5, default };
 
             var result = SetExtensions.Extensions.Segmented(sets).ToArray();
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SetExtensions
@@ -14,29 +15,27 @@ namespace SetExtensions
         /// <returns>Non-intersecting sets of the given sets</returns>
         public static IEnumerable<IEnumerable<T>> Segmented<T>(this IEnumerable<IEnumerable<T>> sets)
         {
-            var disjointSets = new List<List<T>>();
-
-            // Special case: if there is a null set we have to add it first
-            if (sets.Any(s => !s.Any()))
+            if (sets == default)
             {
-                disjointSets.Add(new List<T>());
-
-                sets = sets
-                    .Where(s => s.Any()).ToArray();
+                throw new ArgumentNullException(nameof(sets));
             }
 
-            foreach (var set in sets)
-            {
-                var disjointCopy = set.ToList();
-                var index = 0;
+            var relevants = GetRelevants(sets);
 
-                while (index < disjointSets.Count())
+            var result = new List<HashSet<T>>();
+
+            foreach (var relevant in relevants)
+            {
+                var index = 0;
+                var disjointCopy = new HashSet<T>(relevant);
+
+                while (index < result.Count())
                 {
-                    var intersection = disjointSets[index]
-                        .Intersect(disjointCopy).ToList();
+                    var intersection = new HashSet<T>(result[index]);
+                    intersection.IntersectWith(disjointCopy);
 
                     if ((intersection.Count() == disjointCopy.Count())
-                        && (intersection.Count() == disjointSets[index].Count())) // They are equal
+                        && (intersection.Count() == result[index].Count())) // They are equal
                     {
                         disjointCopy.Clear();
                         break;
@@ -44,14 +43,13 @@ namespace SetExtensions
 
                     if (intersection.Any())
                     {
-                        disjointSets[index] = disjointSets[index]
-                            .Except(intersection).ToList();
-                        disjointSets.Insert(
+                        result[index].ExceptWith(intersection);
+
+                        result.Insert(
                             index: ++index,
                             item: intersection);
 
-                        disjointCopy = disjointCopy
-                            .Except(intersection).ToList();
+                        disjointCopy.ExceptWith(intersection);
                     }
 
                     ++index;
@@ -59,16 +57,27 @@ namespace SetExtensions
 
                 if (disjointCopy.Any())
                 {
-                    disjointSets.Add(disjointCopy);
+                    result.Add(disjointCopy);
                 }
             }
-
-            var result = disjointSets
-                .Where(s => s.Any()).ToArray();
 
             return result;
         }
 
         #endregion Public Methods
+
+        #region Private Methods
+
+        private static IEnumerable<IEnumerable<T>> GetRelevants<T>(this IEnumerable<IEnumerable<T>> sets)
+        {
+            var result = sets
+                .Where(s => s?.Any() ?? false)
+                .Select(s => new HashSet<T>(s))
+                .Distinct(HashSet<T>.CreateSetComparer()).ToArray();
+
+            return result;
+        }
+
+        #endregion Private Methods
     }
 }
