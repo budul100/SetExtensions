@@ -9,6 +9,32 @@ namespace SetExtensionsTests
         #region Public Methods
 
         [Test]
+        public void SegmentEmptyValues()
+        {
+            var set1 = new object[] { 1, default, 3 };
+            var set2 = new object[] { 1, 1, default, 3, default, 3 };
+            var set3 = new object[] { default, 3, 4 };
+            var set4 = new object[] { 4, 3, default };
+            var set5 = System.Array.Empty<object>();
+
+            var sets = new List<object[]>() { set1, set2, set3, set4, set5, default };
+
+            var result = SetExtensions.Extensions.Segmented(sets).ToArray();
+
+            Assert.IsTrue(result.Count() == 3);
+
+            Assert.AreEqual(
+                expected: new object[] { 1 },
+                actual: result[0]);
+            Assert.AreEqual(
+                expected: new object[] { default, 3 },
+                actual: result[1]);
+            Assert.AreEqual(
+                expected: new object[] { 4 },
+                actual: result[2]);
+        }
+
+        [Test]
         public void SegmentValues()
         {
             var set1 = new int[] { 1, 2, 3 };
