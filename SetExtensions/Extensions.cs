@@ -22,42 +22,45 @@ namespace SetExtensions
 
             var relevants = GetRelevants(sets);
 
-            var result = new List<HashSet<T>>();
+            var result = new HashSet<HashSet<T>>();
 
             foreach (var relevant in relevants)
             {
                 var index = 0;
-                var disjointCopy = new HashSet<T>(relevant);
+                var disjoint = new HashSet<T>(relevant);
 
                 while (index < result.Count())
                 {
-                    var intersection = new HashSet<T>(result[index]);
-                    intersection.IntersectWith(disjointCopy);
+                    var intersection = new HashSet<T>(result.ElementAt(index));
+                    intersection.IntersectWith(disjoint);
 
-                    if ((intersection.Count() == disjointCopy.Count())
-                        && (intersection.Count() == result[index].Count())) // They are equal
+                    if ((intersection.Count() == disjoint.Count())
+                        && (intersection.Count() == result.ElementAt(index).Count())) // They are equal
                     {
-                        disjointCopy.Clear();
+                        disjoint.Clear();
                         break;
                     }
 
                     if (intersection.Any())
                     {
-                        result[index].ExceptWith(intersection);
+                        result.ElementAt(index).ExceptWith(intersection);
 
-                        result.Insert(
-                            index: ++index,
-                            item: intersection);
+                        if (!result.ElementAt(index).Any())
+                        {
+                            result.Remove(result.ElementAt(index));
+                        }
 
-                        disjointCopy.ExceptWith(intersection);
+                        result.Add(intersection);
+
+                        disjoint.ExceptWith(intersection);
                     }
 
                     ++index;
                 }
 
-                if (disjointCopy.Any())
+                if (disjoint.Any())
                 {
-                    result.Add(disjointCopy);
+                    result.Add(disjoint);
                 }
             }
 

@@ -1,5 +1,7 @@
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 
 namespace SetExtensionsTests
@@ -7,6 +9,17 @@ namespace SetExtensionsTests
     public class Tests
     {
         #region Public Methods
+
+        [SetUp]
+        public void Prepare()
+        {
+            if (!File.Exists(@"..\..\..\Test.csv"))
+            {
+                ZipFile.ExtractToDirectory(
+                    sourceArchiveFileName: @"..\..\..\Test.zip",
+                    destinationDirectoryName: @"..\..\..");
+            }
+        }
 
         [Test]
         public void SegmentEmptyValues()
@@ -32,6 +45,17 @@ namespace SetExtensionsTests
             Assert.AreEqual(
                 expected: new object[] { 4 },
                 actual: result[2]);
+        }
+
+        [Test]
+        public void SegmentPerformance()
+        {
+            var sets = File.ReadAllLines(@"..\..\..\Test.csv")
+                .Select(l => l.Split(",")).ToList();
+
+            var result = SetExtensions.Extensions.Segmented(sets).ToArray();
+
+            Assert.IsTrue(result.Count() == 365);
         }
 
         [Test]
