@@ -10,17 +10,6 @@ namespace SetExtensionsTests
     {
         #region Public Methods
 
-        [SetUp]
-        public void Prepare()
-        {
-            if (!File.Exists(@"..\..\..\Test.csv"))
-            {
-                ZipFile.ExtractToDirectory(
-                    sourceArchiveFileName: @"..\..\..\Test.zip",
-                    destinationDirectoryName: @"..\..\..");
-            }
-        }
-
         [Test]
         public void SegmentEmptyValues()
         {
@@ -50,8 +39,17 @@ namespace SetExtensionsTests
         [Test]
         public void SegmentPerformance()
         {
+            if (!File.Exists(@"..\..\..\Test.csv"))
+            {
+                ZipFile.ExtractToDirectory(
+                    sourceArchiveFileName: @"..\..\..\Test.zip",
+                    destinationDirectoryName: @"..\..\..");
+            }
+
             var sets = File.ReadAllLines(@"..\..\..\Test.csv")
                 .Select(l => l.Split(",")).ToList();
+
+            File.Delete(@"..\..\..\Test.csv");
 
             var result = SetExtensions.Extensions.Segmented(sets).ToArray();
 
