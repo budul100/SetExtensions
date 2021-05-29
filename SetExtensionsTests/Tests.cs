@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using SetExtensions;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -21,7 +22,7 @@ namespace SetExtensionsTests
 
             var sets = new List<object[]>() { set1, set2, set3, set4, set5, default };
 
-            var result = SetExtensions.Extensions.Segmented(sets).ToArray();
+            var result = sets.Segmented().ToArray();
 
             Assert.IsTrue(result.Count() == 3);
 
@@ -39,19 +40,22 @@ namespace SetExtensionsTests
         [Test]
         public void SegmentPerformance()
         {
-            if (!File.Exists(@"..\..\..\Test.csv"))
-            {
-                ZipFile.ExtractToDirectory(
-                    sourceArchiveFileName: @"..\..\..\Test.zip",
-                    destinationDirectoryName: @"..\..\..");
-            }
+            var folderName = Path.Combine(
+                path1: Path.GetTempPath(),
+                path2: Path.GetRandomFileName());
 
-            var sets = File.ReadAllLines(@"..\..\..\Test.csv")
+            ZipFile.ExtractToDirectory(
+                sourceArchiveFileName: @"..\..\..\Test.zip",
+                destinationDirectoryName: folderName);
+
+            var fileName = Path.Combine(
+                path1: folderName,
+                path2: "Test.csv");
+
+            var sets = File.ReadAllLines(fileName)
                 .Select(l => l.Split(",")).ToList();
 
-            File.Delete(@"..\..\..\Test.csv");
-
-            var result = SetExtensions.Extensions.Segmented(sets).ToArray();
+            var result = sets.Segmented().ToArray();
 
             Assert.IsTrue(result.Count() == 365);
         }
@@ -67,7 +71,7 @@ namespace SetExtensionsTests
 
             var sets = new List<int[]>() { set1, set2, set3, set4, set5, default };
 
-            var result = SetExtensions.Extensions.Segmented(sets).ToArray();
+            var result = sets.Segmented().ToArray();
 
             Assert.IsTrue(result.Count() == 3);
 
@@ -79,6 +83,61 @@ namespace SetExtensionsTests
                 actual: result[1]);
             Assert.AreEqual(
                 expected: new int[] { 4 },
+                actual: result[2]);
+        }
+
+        [Test]
+        public void TranspondedValuesDifferentSizes()
+        {
+            var set1 = new int[] { 1, 2, 3 };
+            var set2 = new int[] { 1, 1, 2, 2 };
+            var set3 = System.Array.Empty<int>();
+            var set4 = new int[] { 2, 3, 4 };
+            var set5 = new int[] { 4, 3, 2 };
+
+            var sets = new List<int[]>() { set1, set2, set3, set4, set5, default };
+
+            var result = sets.Transponded().ToArray();
+
+            Assert.IsTrue(result.Count() == 4);
+
+            Assert.AreEqual(
+                expected: new int[] { 1, 1, 0, 2, 4, 0 },
+                actual: result[0]);
+            Assert.AreEqual(
+                expected: new int[] { 2, 1, 0, 3, 3, 0 },
+                actual: result[1]);
+            Assert.AreEqual(
+                expected: new int[] { 3, 2, 0, 4, 2, 0 },
+                actual: result[2]);
+            Assert.AreEqual(
+                expected: new int[] { 0, 2, 0, 0, 0, 0 },
+                actual: result[3]);
+        }
+
+        [Test]
+        public void TranspondedValuesSameSizes()
+        {
+            var set1 = new int[] { 1, 2, 3 };
+            var set2 = new int[] { 1, 1, 2 };
+            var set3 = System.Array.Empty<int>();
+            var set4 = new int[] { 2, 3, 4 };
+            var set5 = new int[] { 4, 3, 2 };
+
+            var sets = new List<int[]>() { set1, set2, set3, set4, set5, default };
+
+            var result = sets.Transponded().ToArray();
+
+            Assert.IsTrue(result.Count() == 3);
+
+            Assert.AreEqual(
+                expected: new int[] { 1, 1, 0, 2, 4, 0 },
+                actual: result[0]);
+            Assert.AreEqual(
+                expected: new int[] { 2, 1, 0, 3, 3, 0 },
+                actual: result[1]);
+            Assert.AreEqual(
+                expected: new int[] { 3, 2, 0, 4, 2, 0 },
                 actual: result[2]);
         }
 
