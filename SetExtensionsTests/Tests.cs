@@ -87,7 +87,36 @@ namespace SetExtensionsTests
         }
 
         [Test]
-        public void TranspondedValuesDifferentSizes()
+        public void TranspondedValuesDifferentSizesClass()
+        {
+            var set1 = new string[] { "1", "2", "3" };
+            var set2 = new string[] { "1", "1", "2", "2" };
+            var set3 = System.Array.Empty<string>();
+            var set4 = new string[] { "2", "3", "4" };
+            var set5 = new string[] { "4", "3", "2" };
+
+            var sets = new List<string[]>() { set1, set2, set3, set4, set5, default };
+
+            var result = sets.Transponded().ToArray();
+
+            Assert.IsTrue(result.Count() == 4);
+
+            Assert.AreEqual(
+                expected: new string[] { "1", "1", default, "2", "4", default },
+                actual: result[0]);
+            Assert.AreEqual(
+                expected: new string[] { "2", "1", default, "3", "3", default },
+                actual: result[1]);
+            Assert.AreEqual(
+                expected: new string[] { "3", "2", default, "4", "2", default },
+                actual: result[2]);
+            Assert.AreEqual(
+                expected: new string[] { default, "2", default, default, default, default },
+                actual: result[3]);
+        }
+
+        [Test]
+        public void TranspondedValuesDifferentSizesStruct()
         {
             var set1 = new int[] { 1, 2, 3 };
             var set2 = new int[] { 1, 1, 2, 2 };
