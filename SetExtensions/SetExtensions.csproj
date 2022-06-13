@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <AssemblyName>SetExtensions</AssemblyName>
     <AssemblyVersion>1.7.0.0</AssemblyVersion>
     <FileVersion>$(AssemblyVersion)</FileVersion>

@@ -29,23 +29,23 @@ namespace SetExtensions
                 var index = 0;
                 var disjoint = new HashSet<T>(relevant);
 
-                while (index < result.Count())
+                while (index < result.Count)
                 {
                     var intersection = new HashSet<T>(result.ElementAt(index));
                     intersection.IntersectWith(disjoint);
 
-                    if ((intersection.Count() == disjoint.Count())
-                        && (intersection.Count() == result.ElementAt(index).Count())) // They are equal
+                    if ((intersection.Count == disjoint.Count)
+                        && (intersection.Count == result.ElementAt(index).Count)) // They are equal
                     {
                         disjoint.Clear();
                         break;
                     }
 
-                    if (intersection.Any())
+                    if (intersection.Count > 0)
                     {
                         result.ElementAt(index).ExceptWith(intersection);
 
-                        if (!result.ElementAt(index).Any())
+                        if (result.ElementAt(index).Count == 0)
                         {
                             result.Remove(result.ElementAt(index));
                         }
@@ -58,7 +58,7 @@ namespace SetExtensions
                     ++index;
                 }
 
-                if (disjoint.Any())
+                if (disjoint.Count > 0)
                 {
                     result.Add(disjoint);
                 }
@@ -78,9 +78,10 @@ namespace SetExtensions
             {
                 throw new ArgumentNullException(nameof(sets));
             }
-            var length = sets.GetLength();
 
             var result = new List<IEnumerable<T>>();
+
+            var length = sets.GetLength();
 
             for (var index = 0; index < length; index++)
             {

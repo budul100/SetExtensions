@@ -24,7 +24,7 @@ namespace SetExtensionsTests
 
             var result = sets.Segmented().ToArray();
 
-            Assert.IsTrue(result.Count() == 3);
+            Assert.IsTrue(result.Length == 3);
 
             Assert.AreEqual(
                 expected: new object[] { 1 },
@@ -57,7 +57,7 @@ namespace SetExtensionsTests
 
             var result = sets.Segmented().ToArray();
 
-            Assert.IsTrue(result.Count() == 365);
+            Assert.IsTrue(result.Length == 365);
         }
 
         [Test]
@@ -73,7 +73,7 @@ namespace SetExtensionsTests
 
             var result = sets.Segmented().ToArray();
 
-            Assert.IsTrue(result.Count() == 3);
+            Assert.IsTrue(result.Length == 3);
 
             Assert.AreEqual(
                 expected: new int[] { 1 },
@@ -99,7 +99,7 @@ namespace SetExtensionsTests
 
             var result = sets.Transponded().ToArray();
 
-            Assert.IsTrue(result.Count() == 4);
+            Assert.IsTrue(result.Length == 4);
 
             Assert.AreEqual(
                 expected: new string[] { "1", "1", default, "2", "4", default },
@@ -128,7 +128,7 @@ namespace SetExtensionsTests
 
             var result = sets.Transponded().ToArray();
 
-            Assert.IsTrue(result.Count() == 4);
+            Assert.IsTrue(result.Length == 4);
 
             Assert.AreEqual(
                 expected: new int[] { 1, 1, 0, 2, 4, 0 },
@@ -157,7 +157,7 @@ namespace SetExtensionsTests
 
             var result = sets.Transponded().ToArray();
 
-            Assert.IsTrue(result.Count() == 3);
+            Assert.IsTrue(result.Length == 3);
 
             Assert.AreEqual(
                 expected: new int[] { 1, 1, 0, 2, 4, 0 },
