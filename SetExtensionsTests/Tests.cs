@@ -9,6 +9,12 @@ namespace SetExtensionsTests
 {
     public class Tests
     {
+        #region Private Fields
+
+        private int yieldCount;
+
+        #endregion Private Fields
+
         #region Public Methods
 
         [Test]
@@ -84,6 +90,32 @@ namespace SetExtensionsTests
             Assert.AreEqual(
                 expected: new int[] { 4 },
                 actual: result[2]);
+        }
+
+        [Test]
+        public void TranspondedFromEnumerable()
+        {
+            var sets = new List<IEnumerable<int?>>() { GetNumbers(), GetNulls(), GetNumbers(), GetNumbers(), default, GetNumbers() };
+
+            yieldCount = 0;
+
+            var result = sets.Transponded().ToArray();
+
+            Assert.IsTrue(yieldCount == 5);
+            Assert.IsTrue(result.Length == 4);
+
+            Assert.AreEqual(
+                expected: new int?[] { 1, default, 1, 1, default, 1 },
+                actual: result[0]);
+            Assert.AreEqual(
+                expected: new int?[] { 2, default, 2, 2, default, 2 },
+                actual: result[1]);
+            Assert.AreEqual(
+                expected: new int?[] { 3, default, 3, 3, default, 3 },
+                actual: result[2]);
+            Assert.AreEqual(
+                expected: new int?[] { 4, default, 4, 4, default, 4 },
+                actual: result[3]);
         }
 
         [Test]
@@ -171,5 +203,29 @@ namespace SetExtensionsTests
         }
 
         #endregion Public Methods
+
+        #region Private Methods
+
+        private IEnumerable<int?> GetNulls()
+        {
+            yieldCount++;
+
+            yield return default;
+            yield return default;
+            yield return default;
+            yield return default;
+        }
+
+        private IEnumerable<int?> GetNumbers()
+        {
+            yieldCount++;
+
+            yield return 1;
+            yield return 2;
+            yield return 3;
+            yield return 4;
+        }
+
+        #endregion Private Methods
     }
 }

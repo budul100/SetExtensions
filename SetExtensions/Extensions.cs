@@ -20,9 +20,11 @@ namespace SetExtensions
                 throw new ArgumentNullException(nameof(sets));
             }
 
-            var relevants = GetRelevants(sets);
-
             var result = new HashSet<HashSet<T>>();
+
+            var relevants = sets
+                .GetRelevants()
+                .GetUniques().ToArray();
 
             foreach (var relevant in relevants)
             {
@@ -81,11 +83,15 @@ namespace SetExtensions
 
             var result = new List<IEnumerable<T>>();
 
-            var length = sets.GetLength();
+            // Changed into array due to performance reasons
+            var relevants = sets
+                .Select(s => s?.ToArray()).ToArray();
+
+            var length = relevants.GetLength();
 
             for (var index = 0; index < length; index++)
             {
-                var currents = sets
+                var currents = relevants
                     .GetTranspondeds(index).ToArray();
 
                 result.Add(currents);
@@ -103,7 +109,7 @@ namespace SetExtensions
             var result = 0;
 
             var relevants = sets
-                .Where(s => s?.Any() ?? false).ToArray();
+                .GetRelevants().ToArray();
 
             foreach (var relevant in relevants)
             {
@@ -118,23 +124,30 @@ namespace SetExtensions
         private static IEnumerable<IEnumerable<T>> GetRelevants<T>(this IEnumerable<IEnumerable<T>> sets)
         {
             var result = sets
-                .Where(s => s?.Any() ?? false)
-                .Select(s => new HashSet<T>(s))
-                .Distinct(HashSet<T>.CreateSetComparer()).ToArray();
+                .Where(s => s?.Any() ?? false);
 
             return result;
         }
 
-        private static IEnumerable<T> GetTranspondeds<T>(this IEnumerable<IEnumerable<T>> sets, int index)
+        private static IEnumerable<T> GetTranspondeds<T>(this T[][] sets, int index)
         {
             foreach (var set in sets)
             {
-                var result = index < (set?.Count() ?? 0)
-                    ? set.ElementAt(index)
+                var result = index < (set?.Length ?? 0)
+                    ? set[index]
                     : default;
 
                 yield return result;
             }
+        }
+
+        private static IEnumerable<IEnumerable<T>> GetUniques<T>(this IEnumerable<IEnumerable<T>> sets)
+        {
+            var result = sets
+                .Select(s => new HashSet<T>(s))
+                .Distinct(HashSet<T>.CreateSetComparer()).ToArray();
+
+            return result;
         }
 
         #endregion Private Methods
