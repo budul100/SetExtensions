@@ -9,6 +9,45 @@ namespace SetExtensions
         #region Public Methods
 
         /// <summary>
+        /// Returns a boolean value if the current enumerable is part of the other enumerable
+        /// </summary>
+        /// <param name="current">Current set of T</param>
+        /// <param name="other">Other set of T</param>
+        /// <returns></returns>
+        public static bool IsSubSetOf<T>(this IEnumerable<T> current, IEnumerable<T> other)
+        {
+            var result = false;
+
+            if ((current?.Any() ?? false)
+                && (current?.Any() ?? false))
+            {
+                var currentLookup = current.ToLookup(x => x);
+                var otherLookup = other.ToLookup(x => x);
+
+                result = currentLookup
+                    .All(e => e.Count() <= otherLookup[e.Key].Count());
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns a boolean value if the current enumerable is part of the other enumerable
+        /// or if the other enumerable is part of the current enumerable
+        /// </summary>
+        /// <param name="current">Current set of T</param>
+        /// <param name="other">Other set of T</param>
+        /// <returns></returns>
+        public static bool IsSubSetOfOrOther<T>(this IEnumerable<T> current, IEnumerable<T> other)
+        {
+            var result = (current?.Any() ?? false)
+                && (current?.Any() ?? false)
+                && (current.IsSubSetOf(other) || other.IsSubSetOf(current));
+
+            return result;
+        }
+
+        /// <summary>
         /// Gets all non-intersecting sets of the given amount sets.
         /// </summary>
         /// <param name="sets">Given sets of T</param>

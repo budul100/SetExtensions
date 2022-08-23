@@ -18,6 +18,42 @@ namespace SetExtensionsTests
         #region Public Methods
 
         [Test]
+        public void IsSubsetOf()
+        {
+            var set1 = new object[] { 1, default, 3 };
+            var set2 = new object[] { 1, 1, default, 3, default, 3 };
+            var set3 = new object[] { default, 3, 4 };
+            var set4 = new object[] { 4, 3, default };
+            var set5 = System.Array.Empty<object>();
+
+            Assert.IsTrue(set1.IsSubSetOf(set2));
+            Assert.IsFalse(set2.IsSubSetOf(set1));
+
+            Assert.IsTrue(set3.IsSubSetOf(set4));
+            Assert.IsTrue(set4.IsSubSetOf(set3));
+
+            Assert.IsFalse(set5.IsSubSetOf(set1));
+        }
+
+        [Test]
+        public void IsSubSetOfOrOther()
+        {
+            var set1 = new object[] { 1, default, 3 };
+            var set2 = new object[] { 1, 1, default, 3, default, 3 };
+            var set3 = new object[] { default, 3, 4 };
+            var set4 = new object[] { 4, 3, default };
+            var set5 = System.Array.Empty<object>();
+
+            Assert.IsTrue(set1.IsSubSetOfOrOther(set2));
+            Assert.IsTrue(set2.IsSubSetOfOrOther(set1));
+
+            Assert.IsTrue(set3.IsSubSetOfOrOther(set4));
+            Assert.IsTrue(set4.IsSubSetOfOrOther(set3));
+
+            Assert.IsFalse(set5.IsSubSetOfOrOther(set1));
+        }
+
+        [Test]
         public void SegmentEmptyValues()
         {
             var set1 = new object[] { 1, default, 3 };
