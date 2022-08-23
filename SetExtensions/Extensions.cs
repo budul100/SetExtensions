@@ -19,7 +19,7 @@ namespace SetExtensions
             var result = false;
 
             if ((current?.Any() ?? false)
-                && (current?.Any() ?? false))
+                && (other?.Any() ?? false))
             {
                 var currentLookup = current.ToLookup(x => x);
                 var otherLookup = other.ToLookup(x => x);
@@ -41,7 +41,7 @@ namespace SetExtensions
         public static bool IsSubSetOfOrOther<T>(this IEnumerable<T> current, IEnumerable<T> other)
         {
             var result = (current?.Any() ?? false)
-                && (current?.Any() ?? false)
+                && (other?.Any() ?? false)
                 && (current.IsSubSetOf(other) || other.IsSubSetOf(current));
 
             return result;
