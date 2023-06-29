@@ -9,6 +9,23 @@ namespace SetExtensions
         #region Public Methods
 
         /// <summary>
+        /// Gets the cartesian product of multiple sets. The algorithm was influenced
+        /// by https://ericlippert.com/2010/06/28/computing-a-cartesian-product-with-linq/
+        /// </summary>
+        /// <param name="sequences">A set of the resulting sets.</param>
+        /// <returns></returns>
+        public static IEnumerable<IEnumerable<T>> CartesianProduct<T>(this IEnumerable<IEnumerable<T>> sequences)
+        {
+            IEnumerable<IEnumerable<T>> seed = new[] { Enumerable.Empty<T>() };
+
+            var result = sequences.Aggregate(
+                seed: seed,
+                func: (a, i) => a.GetEnumerabled(i));
+
+            return result;
+        }
+
+        /// <summary>
         /// Returns a boolean value if the current enumerable is part of the other enumerable
         /// </summary>
         /// <param name="current">Current set of T</param>
@@ -142,6 +159,18 @@ namespace SetExtensions
         #endregion Public Methods
 
         #region Private Methods
+
+        private static IEnumerable<IEnumerable<T>> GetEnumerabled<T>(this IEnumerable<IEnumerable<T>> accumulator,
+            IEnumerable<T> items)
+        {
+            foreach (var accseq in accumulator)
+            {
+                foreach (var item in items)
+                {
+                    yield return accseq.Concat(new[] { item });
+                }
+            }
+        }
 
         private static int GetLength<T>(this IEnumerable<IEnumerable<T>> sets)
         {

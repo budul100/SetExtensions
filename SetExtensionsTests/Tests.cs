@@ -18,6 +18,49 @@ namespace SetExtensionsTests
         #region Public Methods
 
         [Test]
+        public void GetCartesianProduct()
+        {
+            var set1 = new int[] { 1, 2, 3 };
+            var set2 = new int[] { 2, 3, 4 };
+            var set3 = new int[] { 4, 5, 6 };
+
+            var result = new[] { set1, set2, set3 }
+                .CartesianProduct().ToArray();
+
+            Assert.True(result.Length == 27);
+
+            Assert.Contains(new int[] { 1, 2, 4 }, result);
+            Assert.Contains(new int[] { 1, 2, 5 }, result);
+            Assert.Contains(new int[] { 1, 2, 6 }, result);
+            Assert.Contains(new int[] { 1, 3, 4 }, result);
+            Assert.Contains(new int[] { 1, 3, 5 }, result);
+            Assert.Contains(new int[] { 1, 3, 6 }, result);
+            Assert.Contains(new int[] { 1, 4, 4 }, result);
+            Assert.Contains(new int[] { 1, 4, 5 }, result);
+            Assert.Contains(new int[] { 1, 4, 6 }, result);
+
+            Assert.Contains(new int[] { 2, 2, 4 }, result);
+            Assert.Contains(new int[] { 2, 2, 5 }, result);
+            Assert.Contains(new int[] { 2, 2, 6 }, result);
+            Assert.Contains(new int[] { 2, 3, 4 }, result);
+            Assert.Contains(new int[] { 2, 3, 5 }, result);
+            Assert.Contains(new int[] { 2, 3, 6 }, result);
+            Assert.Contains(new int[] { 2, 4, 4 }, result);
+            Assert.Contains(new int[] { 2, 4, 5 }, result);
+            Assert.Contains(new int[] { 2, 4, 6 }, result);
+
+            Assert.Contains(new int[] { 3, 2, 4 }, result);
+            Assert.Contains(new int[] { 3, 2, 5 }, result);
+            Assert.Contains(new int[] { 3, 2, 6 }, result);
+            Assert.Contains(new int[] { 3, 3, 4 }, result);
+            Assert.Contains(new int[] { 3, 3, 5 }, result);
+            Assert.Contains(new int[] { 3, 3, 6 }, result);
+            Assert.Contains(new int[] { 3, 4, 4 }, result);
+            Assert.Contains(new int[] { 3, 4, 5 }, result);
+            Assert.Contains(new int[] { 3, 4, 6 }, result);
+        }
+
+        [Test]
         public void IsSubsetOf()
         {
             var set1 = new object[] { 1, default, 3 };
