@@ -1,9 +1,9 @@
-using NUnit.Framework;
-using SetExtensions;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using NUnit.Framework;
+using SetExtensions;
 
 namespace SetExtensionsTests
 {
@@ -103,7 +103,30 @@ namespace SetExtensionsTests
         }
 
         [Test]
-        public void SegmentEmptyValues()
+        public void SegmentPerformance()
+        {
+            var folderName = Path.Combine(
+                path1: Path.GetTempPath(),
+                path2: Path.GetRandomFileName());
+
+            ZipFile.ExtractToDirectory(
+                sourceArchiveFileName: @"..\..\..\Test.zip",
+                destinationDirectoryName: folderName);
+
+            var fileName = Path.Combine(
+                path1: folderName,
+                path2: "Test.csv");
+
+            var sets = File.ReadAllLines(fileName)
+                .Select(l => l.Split(",")).ToList();
+
+            var result = sets.Segmented().ToArray();
+
+            Assert.IsTrue(result.Length == 365);
+        }
+
+        [Test]
+        public void SegmentValueEmpties()
         {
             var set1 = new object[] { 1, default, 3 };
             var set2 = new object[] { 1, 1, default, 3, default, 3 };
@@ -129,30 +152,7 @@ namespace SetExtensionsTests
         }
 
         [Test]
-        public void SegmentPerformance()
-        {
-            var folderName = Path.Combine(
-                path1: Path.GetTempPath(),
-                path2: Path.GetRandomFileName());
-
-            ZipFile.ExtractToDirectory(
-                sourceArchiveFileName: @"..\..\..\Test.zip",
-                destinationDirectoryName: folderName);
-
-            var fileName = Path.Combine(
-                path1: folderName,
-                path2: "Test.csv");
-
-            var sets = File.ReadAllLines(fileName)
-                .Select(l => l.Split(",")).ToList();
-
-            var result = sets.Segmented().ToArray();
-
-            Assert.IsTrue(result.Length == 365);
-        }
-
-        [Test]
-        public void SegmentValues()
+        public void SegmentValueGroups()
         {
             var set1 = new int[] { 1, 2, 3 };
             var set2 = new int[] { 1, 1, 2, 2, 3, 3 };
@@ -175,6 +175,29 @@ namespace SetExtensionsTests
             Assert.AreEqual(
                 expected: new int[] { 4 },
                 actual: result[2]);
+        }
+
+        [Test]
+        public void SegmentValueSingles()
+        {
+            var set1 = new int[] { 1, };
+            var set2 = new int[] { 2, };
+            var set3 = new int[] { 2, };
+            var set4 = new int[] { 1, };
+            var set5 = System.Array.Empty<int>();
+
+            var sets = new List<int[]>() { set1, set2, set3, set4, set5, default };
+
+            var result = sets.Segmented().ToArray();
+
+            Assert.IsTrue(result.Length == 2);
+
+            Assert.AreEqual(
+                expected: new int[] { 1 },
+                actual: result[0]);
+            Assert.AreEqual(
+                expected: new int[] { 2 },
+                actual: result[1]);
         }
 
         [Test]
