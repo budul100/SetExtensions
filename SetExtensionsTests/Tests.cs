@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using NUnit.Framework;
 using SetExtensions;
+using Xunit;
 
 namespace SetExtensionsTests
 {
@@ -17,7 +17,7 @@ namespace SetExtensionsTests
 
         #region Public Methods
 
-        [Test]
+        [Fact]
         public void GetCartesianProduct()
         {
             var set1 = new int[] { 1, 2, 3 };
@@ -27,40 +27,40 @@ namespace SetExtensionsTests
             var result = new[] { set1, set2, set3 }
                 .CartesianProduct().ToArray();
 
-            Assert.True(result.Length == 27);
+            Assert.Equal(27, result.Length);
 
-            Assert.Contains(new int[] { 1, 2, 4 }, result);
-            Assert.Contains(new int[] { 1, 2, 5 }, result);
-            Assert.Contains(new int[] { 1, 2, 6 }, result);
-            Assert.Contains(new int[] { 1, 3, 4 }, result);
-            Assert.Contains(new int[] { 1, 3, 5 }, result);
-            Assert.Contains(new int[] { 1, 3, 6 }, result);
-            Assert.Contains(new int[] { 1, 4, 4 }, result);
-            Assert.Contains(new int[] { 1, 4, 5 }, result);
-            Assert.Contains(new int[] { 1, 4, 6 }, result);
+            Assert.Contains(result, r => r.SequenceEqual([1, 2, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([1, 2, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([1, 2, 6]));
+            Assert.Contains(result, r => r.SequenceEqual([1, 3, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([1, 3, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([1, 3, 6]));
+            Assert.Contains(result, r => r.SequenceEqual([1, 4, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([1, 4, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([1, 4, 6]));
 
-            Assert.Contains(new int[] { 2, 2, 4 }, result);
-            Assert.Contains(new int[] { 2, 2, 5 }, result);
-            Assert.Contains(new int[] { 2, 2, 6 }, result);
-            Assert.Contains(new int[] { 2, 3, 4 }, result);
-            Assert.Contains(new int[] { 2, 3, 5 }, result);
-            Assert.Contains(new int[] { 2, 3, 6 }, result);
-            Assert.Contains(new int[] { 2, 4, 4 }, result);
-            Assert.Contains(new int[] { 2, 4, 5 }, result);
-            Assert.Contains(new int[] { 2, 4, 6 }, result);
+            Assert.Contains(result, r => r.SequenceEqual([2, 2, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([2, 2, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([2, 2, 6]));
+            Assert.Contains(result, r => r.SequenceEqual([2, 3, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([2, 3, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([2, 3, 6]));
+            Assert.Contains(result, r => r.SequenceEqual([2, 4, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([2, 4, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([2, 4, 6]));
 
-            Assert.Contains(new int[] { 3, 2, 4 }, result);
-            Assert.Contains(new int[] { 3, 2, 5 }, result);
-            Assert.Contains(new int[] { 3, 2, 6 }, result);
-            Assert.Contains(new int[] { 3, 3, 4 }, result);
-            Assert.Contains(new int[] { 3, 3, 5 }, result);
-            Assert.Contains(new int[] { 3, 3, 6 }, result);
-            Assert.Contains(new int[] { 3, 4, 4 }, result);
-            Assert.Contains(new int[] { 3, 4, 5 }, result);
-            Assert.Contains(new int[] { 3, 4, 6 }, result);
+            Assert.Contains(result, r => r.SequenceEqual([3, 2, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([3, 2, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([3, 2, 6]));
+            Assert.Contains(result, r => r.SequenceEqual([3, 3, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([3, 3, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([3, 3, 6]));
+            Assert.Contains(result, r => r.SequenceEqual([3, 4, 4]));
+            Assert.Contains(result, r => r.SequenceEqual([3, 4, 5]));
+            Assert.Contains(result, r => r.SequenceEqual([3, 4, 6]));
         }
 
-        [Test]
+        [Fact]
         public void IsSubsetOf()
         {
             var set1 = new object[] { 1, default, 3 };
@@ -70,18 +70,18 @@ namespace SetExtensionsTests
             var set5 = System.Array.Empty<object>();
             var set6 = default(IEnumerable<object>);
 
-            Assert.IsTrue(set1.IsSubSetOf(set2));
-            Assert.IsFalse(set2.IsSubSetOf(set1));
+            Assert.True(set1.IsSubSetOf(set2));
+            Assert.False(set2.IsSubSetOf(set1));
 
-            Assert.IsTrue(set3.IsSubSetOf(set4));
-            Assert.IsTrue(set4.IsSubSetOf(set3));
+            Assert.True(set3.IsSubSetOf(set4));
+            Assert.True(set4.IsSubSetOf(set3));
 
-            Assert.IsFalse(set5.IsSubSetOf(set1));
-            Assert.IsFalse(set5.IsSubSetOf(set6));
-            Assert.IsFalse(set6.IsSubSetOf(set5));
+            Assert.False(set5.IsSubSetOf(set1));
+            Assert.False(set5.IsSubSetOf(set6));
+            Assert.False(set6.IsSubSetOf(set5));
         }
 
-        [Test]
+        [Fact]
         public void IsSubSetOfOrOther()
         {
             var set1 = new object[] { 1, default, 3 };
@@ -91,18 +91,18 @@ namespace SetExtensionsTests
             var set5 = System.Array.Empty<object>();
             var set6 = default(IEnumerable<object>);
 
-            Assert.IsTrue(set1.IsSubSetOfOrOther(set2));
-            Assert.IsTrue(set2.IsSubSetOfOrOther(set1));
+            Assert.True(set1.IsSubSetOfOrOther(set2));
+            Assert.True(set2.IsSubSetOfOrOther(set1));
 
-            Assert.IsTrue(set3.IsSubSetOfOrOther(set4));
-            Assert.IsTrue(set4.IsSubSetOfOrOther(set3));
+            Assert.True(set3.IsSubSetOfOrOther(set4));
+            Assert.True(set4.IsSubSetOfOrOther(set3));
 
-            Assert.IsFalse(set5.IsSubSetOfOrOther(set1));
-            Assert.IsFalse(set5.IsSubSetOf(set6));
-            Assert.IsFalse(set6.IsSubSetOf(set5));
+            Assert.False(set5.IsSubSetOfOrOther(set1));
+            Assert.False(set5.IsSubSetOf(set6));
+            Assert.False(set6.IsSubSetOf(set5));
         }
 
-        [Test]
+        [Fact]
         public void SegmentPerformance()
         {
             var folderName = Path.Combine(
@@ -122,10 +122,10 @@ namespace SetExtensionsTests
 
             var result = sets.Segmented().ToArray();
 
-            Assert.IsTrue(result.Length == 365);
+            Assert.Equal(365, result.Length);
         }
 
-        [Test]
+        [Fact]
         public void SegmentValueEmpties()
         {
             var set1 = new object[] { 1, default, 3 };
@@ -138,20 +138,20 @@ namespace SetExtensionsTests
 
             var result = sets.Segmented().ToArray();
 
-            Assert.IsTrue(result.Length == 3);
+            Assert.Equal(3, result.Length);
 
-            Assert.AreEqual(
-                expected: new object[] { 1 },
+            Assert.Equal(
+                expected: [1],
                 actual: result[0]);
-            Assert.AreEqual(
-                expected: new object[] { default, 3 },
+            Assert.Equal(
+                expected: [default, 3],
                 actual: result[1]);
-            Assert.AreEqual(
-                expected: new object[] { 4 },
+            Assert.Equal(
+                expected: [4],
                 actual: result[2]);
         }
 
-        [Test]
+        [Fact]
         public void SegmentValueGroups()
         {
             var set1 = new int[] { 1, 2, 3 };
@@ -164,20 +164,20 @@ namespace SetExtensionsTests
 
             var result = sets.Segmented().ToArray();
 
-            Assert.IsTrue(result.Length == 3);
+            Assert.Equal(3, result.Length);
 
-            Assert.AreEqual(
-                expected: new int[] { 1 },
+            Assert.Equal(
+                expected: [1],
                 actual: result[0]);
-            Assert.AreEqual(
-                expected: new int[] { 2, 3 },
+            Assert.Equal(
+                expected: [2, 3],
                 actual: result[1]);
-            Assert.AreEqual(
-                expected: new int[] { 4 },
+            Assert.Equal(
+                expected: [4],
                 actual: result[2]);
         }
 
-        [Test]
+        [Fact]
         public void SegmentValueSingles()
         {
             var set1 = new int[] { 1, };
@@ -190,17 +190,17 @@ namespace SetExtensionsTests
 
             var result = sets.Segmented().ToArray();
 
-            Assert.IsTrue(result.Length == 2);
+            Assert.Equal(2, result.Length);
 
-            Assert.AreEqual(
-                expected: new int[] { 1 },
+            Assert.Equal(
+                expected: [1],
                 actual: result[0]);
-            Assert.AreEqual(
-                expected: new int[] { 2 },
+            Assert.Equal(
+                expected: [2],
                 actual: result[1]);
         }
 
-        [Test]
+        [Fact]
         public void TranspondedFromEnumerable()
         {
             var sets = new List<IEnumerable<int?>>() { GetNumbers(), GetNulls(), GetNumbers(), GetNumbers(), default, GetNumbers() };
@@ -209,24 +209,24 @@ namespace SetExtensionsTests
 
             var result = sets.Transponded().ToArray();
 
-            Assert.IsTrue(yieldCount == 5);
-            Assert.IsTrue(result.Length == 4);
+            Assert.Equal(5, yieldCount);
+            Assert.Equal(4, result.Length);
 
-            Assert.AreEqual(
-                expected: new int?[] { 1, default, 1, 1, default, 1 },
+            Assert.Equal(
+                expected: [1, default, 1, 1, default, 1],
                 actual: result[0]);
-            Assert.AreEqual(
-                expected: new int?[] { 2, default, 2, 2, default, 2 },
+            Assert.Equal(
+                expected: [2, default, 2, 2, default, 2],
                 actual: result[1]);
-            Assert.AreEqual(
-                expected: new int?[] { 3, default, 3, 3, default, 3 },
+            Assert.Equal(
+                expected: [3, default, 3, 3, default, 3],
                 actual: result[2]);
-            Assert.AreEqual(
-                expected: new int?[] { 4, default, 4, 4, default, 4 },
+            Assert.Equal(
+                expected: [4, default, 4, 4, default, 4],
                 actual: result[3]);
         }
 
-        [Test]
+        [Fact]
         public void TranspondedValuesDifferentSizesClass()
         {
             var set1 = new string[] { "1", "2", "3" };
@@ -239,23 +239,23 @@ namespace SetExtensionsTests
 
             var result = sets.Transponded().ToArray();
 
-            Assert.IsTrue(result.Length == 4);
+            Assert.Equal(4, result.Length);
 
-            Assert.AreEqual(
-                expected: new string[] { "1", "1", default, "2", "4", default },
+            Assert.Equal(
+                expected: ["1", "1", default, "2", "4", default],
                 actual: result[0]);
-            Assert.AreEqual(
-                expected: new string[] { "2", "1", default, "3", "3", default },
+            Assert.Equal(
+                expected: ["2", "1", default, "3", "3", default],
                 actual: result[1]);
-            Assert.AreEqual(
-                expected: new string[] { "3", "2", default, "4", "2", default },
+            Assert.Equal(
+                expected: ["3", "2", default, "4", "2", default],
                 actual: result[2]);
-            Assert.AreEqual(
-                expected: new string[] { default, "2", default, default, default, default },
+            Assert.Equal(
+                expected: [default, "2", default, default, default, default],
                 actual: result[3]);
         }
 
-        [Test]
+        [Fact]
         public void TranspondedValuesDifferentSizesStruct()
         {
             var set1 = new int[] { 1, 2, 3 };
@@ -268,23 +268,23 @@ namespace SetExtensionsTests
 
             var result = sets.Transponded().ToArray();
 
-            Assert.IsTrue(result.Length == 4);
+            Assert.Equal(4, result.Length);
 
-            Assert.AreEqual(
-                expected: new int[] { 1, 1, 0, 2, 4, 0 },
+            Assert.Equal(
+                expected: [1, 1, 0, 2, 4, 0],
                 actual: result[0]);
-            Assert.AreEqual(
-                expected: new int[] { 2, 1, 0, 3, 3, 0 },
+            Assert.Equal(
+                expected: [2, 1, 0, 3, 3, 0],
                 actual: result[1]);
-            Assert.AreEqual(
-                expected: new int[] { 3, 2, 0, 4, 2, 0 },
+            Assert.Equal(
+                expected: [3, 2, 0, 4, 2, 0],
                 actual: result[2]);
-            Assert.AreEqual(
-                expected: new int[] { 0, 2, 0, 0, 0, 0 },
+            Assert.Equal(
+                expected: [0, 2, 0, 0, 0, 0],
                 actual: result[3]);
         }
 
-        [Test]
+        [Fact]
         public void TranspondedValuesSameSizes()
         {
             var set1 = new int[] { 1, 2, 3 };
@@ -297,16 +297,16 @@ namespace SetExtensionsTests
 
             var result = sets.Transponded().ToArray();
 
-            Assert.IsTrue(result.Length == 3);
+            Assert.Equal(3, result.Length);
 
-            Assert.AreEqual(
-                expected: new int[] { 1, 1, 0, 2, 4, 0 },
+            Assert.Equal(
+                expected: [1, 1, 0, 2, 4, 0],
                 actual: result[0]);
-            Assert.AreEqual(
-                expected: new int[] { 2, 1, 0, 3, 3, 0 },
+            Assert.Equal(
+                expected: [2, 1, 0, 3, 3, 0],
                 actual: result[1]);
-            Assert.AreEqual(
-                expected: new int[] { 3, 2, 0, 4, 2, 0 },
+            Assert.Equal(
+                expected: [3, 2, 0, 4, 2, 0],
                 actual: result[2]);
         }
 
