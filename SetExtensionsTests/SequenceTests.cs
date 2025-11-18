@@ -1,13 +1,13 @@
+using SetExtensions;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using SetExtensions;
 using Xunit;
 
 namespace SetExtensionsTests
 {
-    public class Tests
+    public class SequenceTests
     {
         #region Private Fields
 
@@ -110,7 +110,7 @@ namespace SetExtensionsTests
                 path2: Path.GetRandomFileName());
 
             ZipFile.ExtractToDirectory(
-                sourceArchiveFileName: @"..\..\..\Test.zip",
+                sourceArchiveFileName: @"..\..\..\SequenceTests.zip",
                 destinationDirectoryName: folderName);
 
             var fileName = Path.Combine(
