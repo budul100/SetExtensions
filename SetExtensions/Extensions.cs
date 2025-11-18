@@ -4,16 +4,20 @@ using System.Linq;
 
 namespace SetExtensions
 {
+    /// <summary>
+    /// Provides extension methods for sequence operations such as Cartesian product,
+    /// segmentation, neighbor grouping and transposition helpers.
+    /// </summary>
     public static class Extensions
     {
         #region Public Methods
 
         /// <summary>
-        /// Gets the cartesian product of multiple sets. The algorithm was influenced
-        /// by https://ericlippert.com/2010/06/28/computing-a-cartesian-product-with-linq/
+        /// Computes the Cartesian product of the input sequences.
         /// </summary>
-        /// <param name="sequences">A set of the resulting sets.</param>
-        /// <returns></returns>
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <param name="sequences">Sequences to combine.</param>
+        /// <returns>All combinations as sequences of <typeparamref name="T"/>.</returns>
         public static IEnumerable<IEnumerable<T>> CartesianProduct<T>(this IEnumerable<IEnumerable<T>> sequences)
         {
             IEnumerable<IEnumerable<T>> seed = new[] { Enumerable.Empty<T>() };
@@ -26,11 +30,13 @@ namespace SetExtensions
         }
 
         /// <summary>
-        /// Returns a boolean value if the current enumerable is part of the other enumerable
+        /// Determines whether all elements of <paramref name="current"/> appear in <paramref name="other"/>,
+        /// respecting element multiplicity.
         /// </summary>
-        /// <param name="current">Current set of T</param>
-        /// <param name="other">Other set of T</param>
-        /// <returns></returns>
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <param name="current">Sequence to test for containment.</param>
+        /// <param name="other">Sequence to test against.</param>
+        /// <returns>True if <paramref name="current"/> is a multiset subset of <paramref name="other"/>.</returns>
         public static bool IsSubSetOf<T>(this IEnumerable<T> current, IEnumerable<T> other)
         {
             var result = false;
@@ -49,12 +55,12 @@ namespace SetExtensions
         }
 
         /// <summary>
-        /// Returns a boolean value if the current enumerable is part of the other enumerable
-        /// or if the other enumerable is part of the current enumerable
+        /// Determines whether one sequence is a multiset subset of the other (either direction).
         /// </summary>
-        /// <param name="current">Current set of T</param>
-        /// <param name="other">Other set of T</param>
-        /// <returns></returns>
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <param name="current">First sequence.</param>
+        /// <param name="other">Second sequence.</param>
+        /// <returns>True if either sequence is a multiset subset of the other.</returns>
         public static bool IsSubSetOfOrOther<T>(this IEnumerable<T> current, IEnumerable<T> other)
         {
             var result = (current?.Any() ?? false)
@@ -65,10 +71,11 @@ namespace SetExtensions
         }
 
         /// <summary>
-        /// Gets all non-intersecting sets of the given amount sets.
+        /// Produces non-overlapping sets from the provided collections (disjoint segmentation).
         /// </summary>
-        /// <param name="sequences">Given sets of T</param>
-        /// <returns>Non-intersecting sets of the given sets</returns>
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <param name="sequences">Input collections.</param>
+        /// <returns>Non-intersecting sets covering elements from the inputs.</returns>
         public static IEnumerable<IEnumerable<T>> Segmented<T>(this IEnumerable<IEnumerable<T>> sequences)
         {
             if (sequences == default)
@@ -126,30 +133,17 @@ namespace SetExtensions
         }
 
         /// <summary>
-        /// Builds triplet groups from a set of sequences using a combined
-        /// "max-by-size" strategy over Previous-based and Next-based groupings.
-        ///
-        /// A triplet is (Previous, Current, Next), where:
-        /// - Previous is default(T) at the start of a sequence
-        /// - Next    is default(T) at the end of a sequence
-        ///
-        /// Grouping logic:
-        /// 1. For each distinct key(current), we consider all triplets with that
-        ///    current (cluster).
-        /// 2. Inside the cluster, we build:
-        ///    - candidate groups based only on Previous
-        ///    - candidate groups based only on Next
-        ///    (using relaxed matching: equal-by-key OR one side is default(T))
-        /// 3. We then repeatedly:
-        ///    - find the candidate group (from either side) that has the largest
-        ///      overlap with remaining elements in this cluster,
-        ///    - emit that overlap as the next result group,
-        ///    - remove those elements from the remaining set,
-        ///    - repeat until no candidate has overlap > 0.
-        /// 4. Any leftover singletons are returned as groups of size 1.
+        /// Build triplet groups (Previous, Current, Next) from sequences, cluster by key and
+        /// produce neighbor groups using a max-overlap strategy from Previous- and Next-based candidates.
         /// </summary>
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <typeparam name="TKey">Key type used for grouping.</typeparam>
+        /// <param name="sequences">Input sequences.</param>
+        /// <param name="keySelector">Function to extract the grouping key from an element.</param>
+        /// <param name="mergeEnds">If true, consider sequence ends as mergeable when comparing neighbors.</param>
+        /// <returns>Collections of triplet groups (Previous, Current, Next).</returns>
         public static IEnumerable<IEnumerable<(T Previous, T Current, T Next)>> ToNeighborGroups<T, TKey>(this
-            IEnumerable<IEnumerable<T>> sequences, Func<T, TKey> keySelector)
+            IEnumerable<IEnumerable<T>> sequences, Func<T, TKey> keySelector, bool mergeEnds = false)
         {
             if (sequences is null)
             {
@@ -164,9 +158,9 @@ namespace SetExtensions
             var relevants = sequences
                 .Where(s => s?.Count() > 0).ToArray();
 
-            var allClusters = new List<(T Previous, T Current, T Next, bool Part)>();
+            var allClusters = new List<(T Previous, T Current, T Next)>();
 
-            // 1) Build all triplets from all sequences
+            // Build all triplets from all sequences
             foreach (var relevant in relevants)
             {
                 for (var index = 0; index < relevant.Count(); index++)
@@ -184,52 +178,50 @@ namespace SetExtensions
                     var part = relevant.Count() >= 3
                         && (index == 0 || index == relevant.Count() - 1);
 
-                    allClusters.Add((previous, current, next, part));
+                    allClusters.Add((previous, current, next));
                 }
             }
 
-            var clusterGroups = new List<IEnumerable<(T Previous, T Current, T Next)>>();
+            var result = new List<IEnumerable<(T Previous, T Current, T Next)>>();
 
-            // 2) Cluster by key(current) to avoid mixing different "center" elements
+            // Cluster by key(current) to avoid mixing different "center" elements
             var currentGroups = allClusters
                 .GroupBy(t => keySelector(t.Current))
                 .Select(g => g.OrderByDescending(c => !c.Previous.IsDefault()
-                    && !c.Next.IsDefault()))
-                .OrderByDescending(g => !g.First().Previous.IsDefault()
-                    && !g.First().Next.IsDefault())
-                .ThenByDescending(g => g.Count()).ToArray();
+                    && !c.Next.IsDefault())).ToArray();
 
+            // Group by its neighbors
             foreach (var currentGroup in currentGroups)
             {
                 var clusterResult = GetGroupsByPrevOrNext(
                     cluster: currentGroup,
-                    keySelector: keySelector);
+                    keySelector: keySelector,
+                    mergeEnds: mergeEnds);
 
-                clusterGroups.AddRange(clusterResult);
+                result.AddRange(clusterResult);
             }
-
-            var result = clusterGroups
-                .GetCleanedGroups().ToArray();
 
             return result;
         }
 
         /// <summary>
-        /// Gets the values of the given sets as transponded sets.
+        /// Transposes the collection-of-collections: converts rows to columns.
+        /// Missing elements are returned as default(T).
         /// </summary>
-        /// <param name="sets">Given sets of T</param>
-        /// <returns>Transponded sets of the given sets</returns>
-        public static IEnumerable<IEnumerable<T>> Transponded<T>(this IEnumerable<IEnumerable<T>> sets)
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <param name="sequences">Input sequences.</param>
+        /// <returns>Transposed collections of elements.</returns>
+        public static IEnumerable<IEnumerable<T>> Transponded<T>(this IEnumerable<IEnumerable<T>> sequences)
         {
-            if (sets == default)
+            if (sequences == default)
             {
-                throw new ArgumentNullException(nameof(sets));
+                throw new ArgumentNullException(nameof(sequences));
             }
 
             var result = new List<IEnumerable<T>>();
 
             // Changed into array due to performance reasons
-            var relevants = sets
+            var relevants = sequences
                 .Select(s => s?.ToArray()).ToArray();
 
             var length = relevants.GetLength();
@@ -249,56 +241,6 @@ namespace SetExtensions
 
         #region Private Methods
 
-        private static IEnumerable<IEnumerable<(T Previous, T Current, T Next)>> GetCleanedGroups<T>(this
-            IEnumerable<IEnumerable<(T Previous, T Current, T Next)>> groups)
-        {
-            var ordereds = groups
-                .OrderByDescending(g => g.Count()).ToArray();
-
-            var tuples = new HashSet<(T, T)>();
-
-            foreach (var ordered in ordereds)
-            {
-                var groupeds = ordered
-                    .GroupBy(e => (e.Previous, e.Current, e.Next)).ToArray();
-
-                var results = new List<(T Previous, T Current, T Next)>();
-
-                foreach (var grouped in groupeds)
-                {
-                    if (grouped.Key.Previous.IsDefault())
-                    {
-                        var tuple = (grouped.Key.Current, grouped.Key.Next);
-
-                        if (!tuples.Contains(tuple))
-                        {
-                            tuples.Add(tuple);
-                            results.AddRange(grouped);
-                        }
-                    }
-                    else if (grouped.Key.Next.IsDefault())
-                    {
-                        var tuple = (grouped.Key.Previous, grouped.Key.Current);
-
-                        if (!tuples.Contains(tuple))
-                        {
-                            tuples.Add(tuple);
-                            results.AddRange(grouped);
-                        }
-                    }
-                    else
-                    {
-                        results.AddRange(grouped);
-                    }
-                }
-
-                if (results.Count > 0)
-                {
-                    yield return results;
-                }
-            }
-        }
-
         private static IEnumerable<IEnumerable<T>> GetEnumerabled<T>(this IEnumerable<IEnumerable<T>> accumulator,
             IEnumerable<T> items)
         {
@@ -311,30 +253,24 @@ namespace SetExtensions
             }
         }
 
-        /// <summary>
-        /// Combined "max-by-size" strategy:
-        /// - Build candidate groups using Previous-only and Next-only rules.
-        /// - Always take the candidate with the largest intersection with
-        ///   the remaining elements (regardless of whether it is Prev- or Next-based).
-        /// - Remove used elements and repeat.
-        /// </summary>
-        private static IEnumerable<(T Previous, T Current, T Next)>[] GetGroupsByPrevOrNext<T, TKey>(this
-            IEnumerable<(T Previous, T Current, T Next, bool Part)> cluster, Func<T, TKey> keySelector)
+        private static List<List<(T Previous, T Current, T Next)>> GetGroupsByPrevOrNext<T, TKey>(this
+            IEnumerable<(T Previous, T Current, T Next)> cluster, Func<T, TKey> keySelector, bool mergeEnds)
         {
             // Candidate groups based only on Previous and only on Next
-            var prevGroups = cluster.GetGroupsPreviousOnly(keySelector)
-                .OrderByDescending(g => g.Count).ToList();
+            var prevGroups = cluster.GetGroupsPreviousOnly(
+                keySelector: keySelector,
+                mergeEnds: mergeEnds).ToArray();
+            var nextGroups = cluster.GetGroupsNextOnly(
+                keySelector: keySelector,
+                mergeEnds: mergeEnds).ToArray();
 
-            var nextGroups = cluster.GetGroupsNextOnly(keySelector)
-                .OrderByDescending(g => g.Count).ToList();
-
-            var remaining = new HashSet<(T Previous, T Current, T Next, bool Part)>(cluster);
-            var groups = new List<List<(T Previous, T Current, T Next, bool Part)>>();
+            var remaining = new HashSet<(T Previous, T Current, T Next)>(cluster);
+            var result = new List<List<(T Previous, T Current, T Next)>>();
 
             // As long as we still have unassigned triplets
             while (remaining.Count > 0)
             {
-                List<(T Previous, T Current, T Next, bool Part)> bestGroup = null;
+                List<(T Previous, T Current, T Next)> bestGroup = null;
                 int bestCount = 0;
 
                 // Check all Previous-based groups
@@ -380,10 +316,9 @@ namespace SetExtensions
 
                 // Intersection of bestGroup with remaining is the actual group
                 var chosen = bestGroup
-                    .Where(remaining.Contains)
-                    .ToList();
+                    .Where(remaining.Contains).ToList();
 
-                groups.Add(chosen);
+                result.Add(chosen);
 
                 // Remove chosen elements from remaining
                 foreach (var item in chosen)
@@ -398,31 +333,18 @@ namespace SetExtensions
             {
                 foreach (var item in remaining)
                 {
-                    groups.Add(new List<(T Previous, T Current, T Next, bool Part)> { item });
+                    result.Add(new List<(T Previous, T Current, T Next)> { item });
                 }
             }
-
-            var result = groups
-                .Select(g => g
-                    .Where(c => !c.Part)
-                    .Select(c => (c.Previous, c.Current, c.Next)))
-                .Where(g => g.Any()).ToArray();
 
             return result;
         }
 
-        /// <summary>
-        /// Builds candidate groups using only Next for compatibility:
-        /// - key(Current) must match (enforced by outer clustering).
-        /// - Next is compatible if:
-        ///     * key(Next) equal OR
-        ///     * one side is default(T).
-        /// </summary>
-        private static List<List<(T Previous, T Current, T Next, bool Part)>> GetGroupsNextOnly<T, TKey>(this
-            IEnumerable<(T Previous, T Current, T Next, bool Part)> cluster, Func<T, TKey> keySelector)
+        private static List<List<(T Previous, T Current, T Next)>> GetGroupsNextOnly<T, TKey>(this
+            IEnumerable<(T Previous, T Current, T Next)> cluster, Func<T, TKey> keySelector, bool mergeEnds)
         {
-            var result = new List<List<(T Previous, T Current, T Next, bool Part)>>();
-            var reps = new List<(T Previous, T Current, T Next, bool Part)>(); // representatives
+            var result = new List<List<(T Previous, T Current, T Next)>>();
+            var reps = new List<(T Previous, T Current, T Next)>(); // representatives
 
             var relevants = cluster.ToArray();
 
@@ -438,7 +360,8 @@ namespace SetExtensions
                 {
                     if (reps[i].IsCompatibleNextOnly(
                         other: relevant,
-                        keySelector: keySelector))
+                        keySelector: keySelector,
+                        mergeEnds: mergeEnds))
                     {
                         idx = i;
                         break;
@@ -447,39 +370,32 @@ namespace SetExtensions
 
                 if (idx == -1)
                 {
-                    result.Add(new List<(T, T, T, bool)> { relevant });
+                    result.Add(new List<(T, T, T)> { relevant });
                     reps.Add(relevant);
                 }
                 else
                 {
                     result[idx].Add(relevant);
 
-                    var (previous, current, next, part) = reps[idx];
+                    var (previous, current, next) = reps[idx];
 
                     if (next.IsDefault() && !tNext.IsDefault())
                     {
                         next = tNext;
                     }
 
-                    reps[idx] = (previous, current, next, part);
+                    reps[idx] = (previous, current, next);
                 }
             }
 
             return result;
         }
 
-        /// <summary>
-        /// Builds candidate groups using only Previous for compatibility:
-        /// - key(Current) must match (enforced by outer clustering).
-        /// - Previous is compatible if:
-        ///     * key(Previous) equal OR
-        ///     * one side is default(T).
-        /// </summary>
-        private static List<List<(T Previous, T Current, T Next, bool Part)>> GetGroupsPreviousOnly<T, TKey>(this
-            IEnumerable<(T Previous, T Current, T Next, bool Part)> cluster, Func<T, TKey> keySelector)
+        private static List<List<(T Previous, T Current, T Next)>> GetGroupsPreviousOnly<T, TKey>(this
+            IEnumerable<(T Previous, T Current, T Next)> cluster, Func<T, TKey> keySelector, bool mergeEnds)
         {
-            var result = new List<List<(T Previous, T Current, T Next, bool Part)>>();
-            var reps = new List<(T Previous, T Current, T Next, bool Part)>(); // representatives
+            var result = new List<List<(T Previous, T Current, T Next)>>();
+            var reps = new List<(T Previous, T Current, T Next)>(); // representatives
 
             var relevants = cluster.ToArray();
 
@@ -495,7 +411,8 @@ namespace SetExtensions
                 {
                     if (reps[i].IsCompatiblePreviousOnly(
                         other: relevant,
-                        keySelector: keySelector))
+                        keySelector: keySelector,
+                        mergeEnds: mergeEnds))
                     {
                         idx = i;
                         break;
@@ -504,21 +421,21 @@ namespace SetExtensions
 
                 if (idx == -1)
                 {
-                    result.Add(new List<(T, T, T, bool)> { relevant });
+                    result.Add(new List<(T, T, T)> { relevant });
                     reps.Add(relevant);
                 }
                 else
                 {
                     result[idx].Add(relevant);
 
-                    var (previous, current, next, part) = reps[idx];
+                    var (previous, current, next) = reps[idx];
 
                     if (previous.IsDefault() && !tPrev.IsDefault())
                     {
                         previous = tPrev;
                     }
 
-                    reps[idx] = (previous, current, next, part);
+                    reps[idx] = (previous, current, next);
                 }
             }
 
@@ -571,8 +488,8 @@ namespace SetExtensions
             return result;
         }
 
-        private static bool IsCompatibleCrossing<T, TKey>(this (T Previous, T Current, T Next, bool Part) current,
-            (T Previous, T Current, T Next, bool Part) other, Func<T, TKey> keySelector)
+        private static bool IsCompatibleCrossing<T, TKey>(this (T Previous, T Current, T Next) current,
+            (T Previous, T Current, T Next) other, Func<T, TKey> keySelector)
         {
             if (current.Previous.IsDefault()
                 && current.Next.IsDefault()
@@ -597,8 +514,8 @@ namespace SetExtensions
             return true;
         }
 
-        private static bool IsCompatibleNextOnly<T, TKey>(this (T Previous, T Current, T Next, bool Part) current,
-            (T Previous, T Current, T Next, bool Part) other, Func<T, TKey> keySelector)
+        private static bool IsCompatibleNextOnly<T, TKey>(this (T Previous, T Current, T Next) current,
+            (T Previous, T Current, T Next) other, Func<T, TKey> keySelector, bool mergeEnds)
         {
             bool comparer(T c, T o) => EqualityComparer<TKey>.Default.Equals(
                 x: keySelector(c),
@@ -609,8 +526,9 @@ namespace SetExtensions
                 && !comparer(current.Next, other.Next))
                 return false;
 
-            if (current.Next.IsDefault()
-                && other.Next.IsDefault()
+            if (!mergeEnds
+                && !current.Previous.IsDefault()
+                && !other.Previous.IsDefault()
                 && !comparer(current.Previous, other.Previous))
                 return false;
 
@@ -625,8 +543,8 @@ namespace SetExtensions
             return true;
         }
 
-        private static bool IsCompatiblePreviousOnly<T, TKey>(this (T Previous, T Current, T Next, bool Part) current,
-            (T Previous, T Current, T Next, bool Part) other, Func<T, TKey> keySelector)
+        private static bool IsCompatiblePreviousOnly<T, TKey>(this (T Previous, T Current, T Next) current,
+            (T Previous, T Current, T Next) other, Func<T, TKey> keySelector, bool mergeEnds)
         {
             bool comparer(T c, T o) => EqualityComparer<TKey>.Default.Equals(
                 x: keySelector(c),
@@ -637,8 +555,9 @@ namespace SetExtensions
                 && !comparer(current.Previous, other.Previous))
                 return false;
 
-            if (current.Previous.IsDefault()
-                && other.Previous.IsDefault()
+            if (!mergeEnds
+                && !current.Next.IsDefault()
+                && !other.Next.IsDefault()
                 && !comparer(current.Next, other.Next))
                 return false;
 
