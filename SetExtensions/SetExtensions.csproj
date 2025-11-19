@@ -9,20 +9,20 @@
 		<Authors>budul</Authors>
 		<Description>Multiple extension methods to determine, manipulate and adjust enumerable data sets</Description>
 		<RepositoryUrl>https://github.com/budul100/SetExtensions</RepositoryUrl>
-		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 
-		<DebugType>portable</DebugType>
-		<EmbedUntrackedSources>true</EmbedUntrackedSources>
-		<IncludeSymbols>true</IncludeSymbols>
-		<OutputType>Library</OutputType>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 		<PackageId>budul.SetExtensions</PackageId>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageTags>Enumerable sets, Enumerable set helpers</PackageTags>
 		<PackageProjectUrl>https://www.nuget.org/packages/budul.SetExtensions</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+
+		<DebugType>portable</DebugType>
+		<OutputType>Library</OutputType>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 
 		<!-- No package by default-->
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
