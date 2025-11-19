@@ -92,7 +92,7 @@ namespace SetExtensionsTests
         /// Ensures the middle element is grouped correctly across three overlapping sequences.
         /// </summary>
         [Fact]
-        public void ToNeighborGroups_MiddleElement_B_IsGroupedAcrossThreeSequences()
+        public void ToNeighborGroups_MiddleElement_IsGroupedAcrossThreeSequences()
         {
             IEnumerable<IEnumerable<string>> sequences =
             [
