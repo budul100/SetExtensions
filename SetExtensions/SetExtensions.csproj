@@ -3,9 +3,9 @@
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;netstandard2.1;net7.0;net8.0</TargetFrameworks>
 		<AssemblyName>SetExtensions</AssemblyName>
-		<AssemblyVersion>1.12.0</AssemblyVersion>
-		<FileVersion>$(AssemblyVersion)</FileVersion>
-		<Version>$(AssemblyVersion)</Version>
+		<Version>1.13.0</Version>
+		<FileVersion>$(Version)</FileVersion>
+		<AssemblyVersion>$(Version)</AssemblyVersion>
 		<Authors>budul</Authors>
 		<Description>Multiple extension methods to determine, manipulate and adjust enumerable data sets</Description>
 		<RepositoryUrl>https://github.com/budul100/SetExtensions</RepositoryUrl>
