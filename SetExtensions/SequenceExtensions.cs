@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,11 +20,13 @@ namespace SetExtensions
         /// <returns>All combinations as sequences of <typeparamref name="T"/>.</returns>
         public static IEnumerable<IEnumerable<T>> CartesianProduct<T>(this IEnumerable<IEnumerable<T>> sequences)
         {
-            IEnumerable<IEnumerable<T>> seed = new[] { Enumerable.Empty<T>() };
+            ArgumentNullException.ThrowIfNull(sequences);
+
+            IEnumerable<IEnumerable<T>> seed = [[]];
 
             var result = sequences.Aggregate(
                 seed: seed,
-                func: (a, i) => a.GetEnumerabled(i));
+                func: (a, i) => a.CombineWith(i));
 
             return result;
         }
@@ -39,17 +41,29 @@ namespace SetExtensions
         /// <returns>True if <paramref name="current"/> is a multiset subset of <paramref name="other"/>.</returns>
         public static bool IsSubSetOf<T>(this IEnumerable<T> current, IEnumerable<T> other)
         {
-            var result = false;
-
-            if ((current?.Any() ?? false)
-                && (other?.Any() ?? false))
+            if (current is null
+                || other is null)
             {
-                var currentLookup = current.ToLookup(x => x);
-                var otherLookup = other.ToLookup(x => x);
-
-                result = currentLookup
-                    .All(e => e.Count() <= otherLookup[e.Key].Count());
+                return false;
             }
+
+            // Each sequence is enumerated exactly once (an empty lookup means an empty sequence)
+            var currentLookup = current.ToLookup(x => x);
+
+            if (currentLookup.Count == 0)
+            {
+                return false;
+            }
+
+            var otherLookup = other.ToLookup(x => x);
+
+            if (otherLookup.Count == 0)
+            {
+                return false;
+            }
+
+            var result = currentLookup
+                .All(e => e.Count() <= otherLookup[e.Key].Count());
 
             return result;
         }
@@ -63,9 +77,13 @@ namespace SetExtensions
         /// <returns>True if either sequence is a multiset subset of the other.</returns>
         public static bool IsSubSetOfOrOther<T>(this IEnumerable<T> current, IEnumerable<T> other)
         {
-            var result = (current?.Any() ?? false)
-                && (other?.Any() ?? false)
-                && (current.IsSubSetOf(other) || other.IsSubSetOf(current));
+            // Materialized once, because both directions are tested
+            var currents = current?.ToArray();
+            var others = other?.ToArray();
+
+            var result = currents?.Length > 0
+                && others?.Length > 0
+                && (currents.IsSubSetOf(others) || others.IsSubSetOf(currents));
 
             return result;
         }
@@ -75,32 +93,36 @@ namespace SetExtensions
         /// </summary>
         /// <typeparam name="T">Element type.</typeparam>
         /// <param name="sequences">Input collections.</param>
+        /// <param name="comparer">Optional equality comparer for element comparison.</param>
         /// <returns>Non-intersecting sets covering elements from the inputs.</returns>
-        public static IEnumerable<IEnumerable<T>> Segmented<T>(this IEnumerable<IEnumerable<T>> sequences)
+        public static IEnumerable<IEnumerable<T>> Segmented<T>(this IEnumerable<IEnumerable<T>> sequences,
+            IEqualityComparer<T> comparer = null)
         {
-            if (sequences == default)
-            {
-                throw new ArgumentNullException(nameof(sequences));
-            }
+            ArgumentNullException.ThrowIfNull(sequences);
 
-            var result = new HashSet<HashSet<T>>();
+            comparer ??= EqualityComparer<T>.Default;
+
+            var result = new List<HashSet<T>>();
 
             var relevants = sequences
-                .GetRelevants()
-                .GetUniques().ToArray();
+                .GetUniques(comparer);
 
             foreach (var relevant in relevants)
             {
                 var index = 0;
-                var disjoint = new HashSet<T>(relevant);
+                var disjoint = new HashSet<T>(relevant, comparer);
 
-                while (index < result.Count)
+                while (index < result.Count
+                    && disjoint.Count > 0)
                 {
-                    var intersection = new HashSet<T>(result.ElementAt(index));
+                    var intersection = new HashSet<T>(
+                        collection: result[index],
+                        comparer: comparer);
+
                     intersection.IntersectWith(disjoint);
 
-                    if ((intersection.Count == disjoint.Count)
-                        && (intersection.Count == result.ElementAt(index).Count)) // They are equal
+                    if (intersection.Count == disjoint.Count
+                        && intersection.Count == result[index].Count)
                     {
                         disjoint.Clear();
                         break;
@@ -108,19 +130,24 @@ namespace SetExtensions
 
                     if (intersection.Count > 0)
                     {
-                        result.ElementAt(index).ExceptWith(intersection);
+                        result[index].ExceptWith(intersection);
 
-                        if (result.ElementAt(index).Count == 0)
+                        if (result[index].Count == 0)
                         {
-                            result.Remove(result.ElementAt(index));
+                            result.RemoveAt(index);
+                        }
+                        else
+                        {
+                            ++index;
                         }
 
                         result.Add(intersection);
-
                         disjoint.ExceptWith(intersection);
                     }
-
-                    ++index;
+                    else
+                    {
+                        ++index;
+                    }
                 }
 
                 if (disjoint.Count > 0)
@@ -141,10 +168,7 @@ namespace SetExtensions
         /// <returns>Transposed collections of elements.</returns>
         public static IEnumerable<IEnumerable<T>> Transponded<T>(this IEnumerable<IEnumerable<T>> sequences)
         {
-            if (sequences == default)
-            {
-                throw new ArgumentNullException(nameof(sequences));
-            }
+            ArgumentNullException.ThrowIfNull(sequences);
 
             var result = new List<IEnumerable<T>>();
 
@@ -152,7 +176,7 @@ namespace SetExtensions
             var relevants = sequences
                 .Select(s => s?.ToArray()).ToArray();
 
-            var length = relevants.GetLength();
+            var length = relevants.GetMaxLength();
 
             for (var index = 0; index < length; index++)
             {
@@ -169,39 +193,33 @@ namespace SetExtensions
 
         #region Private Methods
 
-        private static IEnumerable<IEnumerable<T>> GetEnumerabled<T>(this IEnumerable<IEnumerable<T>> accumulator,
+        private static IEnumerable<IEnumerable<T>> CombineWith<T>(this IEnumerable<IEnumerable<T>> accumulator,
             IEnumerable<T> items)
         {
+            // Materialized once, because it is combined with every accumulated sequence
+            var relevants = items.ToArray();
+
             foreach (var accseq in accumulator)
             {
-                foreach (var item in items)
+                foreach (var item in relevants)
                 {
-                    yield return accseq.Concat(new[] { item });
+                    yield return accseq.Concat([item]);
                 }
             }
         }
 
-        private static int GetLength<T>(this IEnumerable<IEnumerable<T>> sequences)
+        private static int GetMaxLength<T>(this T[][] sequences)
         {
             var result = 0;
 
-            var relevants = sequences
-                .GetRelevants().ToArray();
-
-            foreach (var relevant in relevants)
+            foreach (var sequence in sequences)
             {
-                result = Math.Max(
-                    val1: result,
-                    val2: relevant.Count());
+                if (sequence != null
+                    && sequence.Length > result)
+                {
+                    result = sequence.Length;
+                }
             }
-
-            return result;
-        }
-
-        private static IEnumerable<IEnumerable<T>> GetRelevants<T>(this IEnumerable<IEnumerable<T>> sequences)
-        {
-            var result = sequences
-                .Where(s => s?.Any() ?? false);
 
             return result;
         }
@@ -218,10 +236,13 @@ namespace SetExtensions
             }
         }
 
-        private static IEnumerable<T>[] GetUniques<T>(this IEnumerable<IEnumerable<T>> sequences)
+        private static IEnumerable<T>[] GetUniques<T>(this IEnumerable<IEnumerable<T>> sequences,
+            IEqualityComparer<T> comparer)
         {
+            // Each inner sequence is enumerated exactly once, null and empty sequences are dropped
             var result = sequences
-                .Select(s => new HashSet<T>(s))
+                .Select(s => s is null ? null : new HashSet<T>(s, comparer))
+                .Where(s => s?.Count > 0)
                 .Distinct(HashSet<T>.CreateSetComparer()).ToArray();
 
             return result;

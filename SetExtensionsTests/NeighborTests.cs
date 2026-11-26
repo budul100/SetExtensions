@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SetExtensions;
@@ -115,6 +115,29 @@ namespace SetExtensionsTests
         }
 
         /// <summary>
+        /// Regression test: when the representative of a Previous-based candidate group has no Previous,
+        /// it must take Previous from the joined triplet and keep its own Next. Otherwise the group
+        /// becomes compatible with everything and unrelated triplets are merged.
+        /// </summary>
+        [Fact]
+        public void ToNeighborGroups_PreviousOnlyRepresentative_KeepsNextWhenTakingPrevious()
+        {
+            IEnumerable<IEnumerable<string>> sequences =
+            [
+                ["B", "C"],
+                ["A", "B"],
+                ["Z", "B"],
+                ["B", "D"]
+            ];
+
+            var groups = sequences
+                .ToNeighborGroups(s => s).ToList();
+
+            Assert.Equal(6, groups.Count);
+            Assert.Equal(8, groups.Sum(e => e.Count()));
+        }
+
+        /// <summary>
         /// Verifies that a provided key selector is used
         /// to normalize values (e.g. case-insensitive grouping).
         /// </summary>
@@ -141,6 +164,25 @@ namespace SetExtensionsTests
                 t => (t.Previous == "a" && t.Current == "b") || (t.Current == "b" && t.Next == "c"));
             Assert.Contains(allTriplets,
                 t => (t.Previous == "A" && t.Current == "B") || (t.Current == "b" && t.Next == "C"));
+        }
+
+        /// <summary>
+        /// Regression test: a default value of a value type (0) is a real neighbor, not a missing one.
+        /// </summary>
+        [Fact]
+        public void ToNeighborGroups_ValueTypeDefault_IsNotTreatedAsMissingNeighbor()
+        {
+            IEnumerable<IEnumerable<int>> sequences =
+            [
+                [0, 1],
+                [2, 1]
+            ];
+
+            var groups = sequences
+                .ToNeighborGroups(s => s).ToList();
+
+            Assert.Equal(4, groups.Count);
+            Assert.Equal(4, groups.Sum(e => e.Count()));
         }
 
         #endregion Public Methods

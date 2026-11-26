@@ -1,7 +1,7 @@
-﻿# SetExtensions
+# SetExtensions
 
 Lightweight C# extension methods for working with collections of sets (`IEnumerable<IEnumerable<T>>`).  
-Supports .NET Standard 2.0 / 2.1 and .NET 7 / 8.
+Supports .NET 10.
 
 ## Quick overview
 
@@ -43,7 +43,7 @@ var isSubset = a.IsSubSetOf(b);
 // Segmented 
 var setsForSeg = new[] { new[] {1,1,2}, new[] {1,1,2,3} }; 
 var segments = setsForSeg.Segmented(); 
-// yields disjoint groups covering values, e.g. [1,1,2], [3] (order not guaranteed)
+// yields disjoint groups covering values, e.g. [1,2], [3] (order not guaranteed)
 
 // Transpose 
 var rows = new[] { new[] { "a","b" }, new[] { "c","d" } }; 
@@ -53,7 +53,7 @@ var cols = rows.Transponded();
 // Neighbor groups (example uses string key) 
 var sequences = new[] { new[] { "a", "b" }, new[] { "a", "b", "c" } , new[] { "b", "c" } }; 
 var groups = sequences.ToNeighborGroups(s => s); 
-// yields [(null, "a", "b"), (null, "a", "b")], [("a", "b", null), ("a", "b", "c"), (null, "b", "c")], [("b", "c", null), ("b, "c", null)]
+// yields [(null, "a", "b"), (null, "a", "b")], [("a", "b", null), ("a", "b", "c"), (null, "b", "c")], [("b", "c", null), ("b", "c", null)]
 ```
 
 ## Notes

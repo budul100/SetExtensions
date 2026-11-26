@@ -56,30 +56,6 @@ namespace SetExtensionsTests
         }
 
         /// <summary>
-        /// Tests multiset subset behaviour: counts and duplicates must be respected.
-        /// </summary>
-        [Fact]
-        public void IsSubSetOf_MultisetSubsetBehavior()
-        {
-            var set1 = new object[] { 1, default, 3 };
-            var set2 = new object[] { 1, 1, default, 3, default, 3 };
-            var set3 = new object[] { default, 3, 4 };
-            var set4 = new object[] { 4, 3, default };
-            var set5 = System.Array.Empty<object>();
-            var set6 = default(IEnumerable<object>);
-
-            Assert.True(set1.IsSubSetOf(set2));
-            Assert.False(set2.IsSubSetOf(set1));
-
-            Assert.True(set3.IsSubSetOf(set4));
-            Assert.True(set4.IsSubSetOf(set3));
-
-            Assert.False(set5.IsSubSetOf(set1));
-            Assert.False(set5.IsSubSetOf(set6));
-            Assert.False(set6.IsSubSetOf(set5));
-        }
-
-        /// <summary>
         /// Tests symmetric multiset subset detection (either sequence may be subset of the other).
         /// </summary>
         [Fact]
@@ -99,6 +75,30 @@ namespace SetExtensionsTests
             Assert.True(set4.IsSubSetOfOrOther(set3));
 
             Assert.False(set5.IsSubSetOfOrOther(set1));
+            Assert.False(set5.IsSubSetOfOrOther(set6));
+            Assert.False(set6.IsSubSetOfOrOther(set5));
+        }
+
+        /// <summary>
+        /// Tests multiset subset behaviour: counts and duplicates must be respected.
+        /// </summary>
+        [Fact]
+        public void IsSubSetOf_MultisetSubsetBehavior()
+        {
+            var set1 = new object[] { 1, default, 3 };
+            var set2 = new object[] { 1, 1, default, 3, default, 3 };
+            var set3 = new object[] { default, 3, 4 };
+            var set4 = new object[] { 4, 3, default };
+            var set5 = System.Array.Empty<object>();
+            var set6 = default(IEnumerable<object>);
+
+            Assert.True(set1.IsSubSetOf(set2));
+            Assert.False(set2.IsSubSetOf(set1));
+
+            Assert.True(set3.IsSubSetOf(set4));
+            Assert.True(set4.IsSubSetOf(set3));
+
+            Assert.False(set5.IsSubSetOf(set1));
             Assert.False(set5.IsSubSetOf(set6));
             Assert.False(set6.IsSubSetOf(set5));
         }

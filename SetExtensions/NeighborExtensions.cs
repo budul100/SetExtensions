@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using SetExtensions.Models;
 
 namespace SetExtensions
 {
@@ -15,6 +16,7 @@ namespace SetExtensions
         /// <summary>
         /// Build triplet groups (Previous, Current, Next) from sequences, cluster by key and
         /// produce neighbor groups using a max-overlap strategy from Previous- and Next-based candidates.
+        /// Missing neighbors (sequence start / end) are represented by default(T).
         /// </summary>
         /// <typeparam name="T">Element type.</typeparam>
         /// <typeparam name="TKey">Key type used for grouping.</typeparam>
@@ -25,18 +27,16 @@ namespace SetExtensions
         public static IEnumerable<IEnumerable<(T Previous, T Current, T Next)>> ToNeighborGroups<T, TKey>(this
             IEnumerable<IEnumerable<T>> sequences, Func<T, TKey> keySelector, bool mergeEnds = false)
         {
-            if (sequences is null)
-            {
-                throw new ArgumentNullException(nameof(sequences));
-            }
+            ArgumentNullException.ThrowIfNull(sequences);
 
-            if (keySelector is null)
-            {
-                throw new ArgumentNullException(nameof(keySelector));
-            }
+            ArgumentNullException.ThrowIfNull(keySelector);
 
-            var triplets = sequences
-                .Where(s => s?.Count() > 0)
+            // Each inner sequence is enumerated exactly once
+            var relevants = sequences
+                .Select(s => s?.ToArray())
+                .Where(s => s?.Length > 0).ToArray();
+
+            var triplets = relevants
                 .GetTriplets(keySelector).ToArray();
 
             var result = new List<IEnumerable<(T Previous, T Current, T Next)>>();
@@ -112,6 +112,7 @@ namespace SetExtensions
                     }
                 }
 
+                // Every triplet is part of at least one candidate group, so this is only a safety net
                 if (bestGroup is null || bestCount == 0)
                     break;
 
@@ -129,26 +130,16 @@ namespace SetExtensions
                 }
             }
 
-            if (remaining.Count > 0)
-            {
-                foreach (var item in remaining)
-                {
-                    result.Add(new List<(T Previous, T Current, T Next)>
-                    {
-                        (item.Previous, item.Current, item.Next)
-                    });
-                }
-            }
-
             return result;
         }
 
         private static List<Triplet<T, TKey>[]> GetGroupsNextOnly<T, TKey>(this IEnumerable<Triplet<T, TKey>> triplets,
             bool mergeEnds)
         {
-            var relevants = triplets.ToArray();
-            var result = new List<Triplet<T, TKey>[]>();
+            var groups = new List<List<Triplet<T, TKey>>>();
             var reps = new List<Triplet<T, TKey>>();
+
+            var relevants = triplets.ToArray();
 
             foreach (var relevant in relevants)
             {
@@ -168,22 +159,19 @@ namespace SetExtensions
 
                 if (idx == -1)
                 {
-                    result.Add(new[] { relevant });
+                    groups.Add([relevant]);
                     reps.Add(relevant);
                 }
                 else
                 {
-                    var list = result[idx].ToList();
-                    list.Add(relevant);
-                    result[idx] = list.ToArray();
-
-                    // refine representative: if Next is default and relevant has non-default,
-                    // use the more specific one
+                    groups[idx].Add(relevant);
                     var rep = reps[idx];
+
                     if (rep.NextIsDefault
                         && !relevant.NextIsDefault)
                     {
-                        rep = new Triplet<T, TKey>(
+                        // Keep Previous of the representative, take Next from the relevant triplet
+                        reps[idx] = new Triplet<T, TKey>(
                             previous: rep.Previous,
                             current: rep.Current,
                             next: relevant.Next,
@@ -192,13 +180,12 @@ namespace SetExtensions
                             nextKey: relevant.NextKey,
                             prevIsDefault: rep.PrevIsDefault,
                             nextIsDefault: relevant.NextIsDefault);
-
-                        rep.Contents.AddRange(relevant.Contents);
-
-                        reps[idx] = rep;
                     }
                 }
             }
+
+            var result = groups
+                .Select(g => g.ToArray()).ToList();
 
             return result;
         }
@@ -206,9 +193,10 @@ namespace SetExtensions
         private static List<Triplet<T, TKey>[]> GetGroupsPreviousOnly<T, TKey>(this IEnumerable<Triplet<T, TKey>> triplets,
             bool mergeEnds)
         {
-            var relevants = triplets.ToArray();
-            var result = new List<Triplet<T, TKey>[]>();
+            var groups = new List<List<Triplet<T, TKey>>>();
             var reps = new List<Triplet<T, TKey>>();
+
+            var relevants = triplets.ToArray();
 
             foreach (var relevant in relevants)
             {
@@ -228,68 +216,68 @@ namespace SetExtensions
 
                 if (idx == -1)
                 {
-                    result.Add(new[] { relevant });
+                    groups.Add([relevant]);
                     reps.Add(relevant);
                 }
                 else
                 {
-                    var list = result[idx].ToList();
-                    list.Add(relevant);
-                    result[idx] = list.ToArray();
-
-                    // refine representative: if Prev is default and relevant has non-default,
-                    // use the more specific one
+                    groups[idx].Add(relevant);
                     var rep = reps[idx];
+
                     if (rep.PrevIsDefault
                         && !relevant.PrevIsDefault)
                     {
-                        rep = new Triplet<T, TKey>(
-                            previous: rep.Previous,
+                        // Take Previous from the relevant triplet, keep Next of the representative
+                        reps[idx] = new Triplet<T, TKey>(
+                            previous: relevant.Previous,
                             current: rep.Current,
-                            next: relevant.Next,
-                            prevKey: rep.PrevKey,
+                            next: rep.Next,
+                            prevKey: relevant.PrevKey,
                             currKey: rep.CurrKey,
-                            nextKey: relevant.NextKey,
-                            prevIsDefault: rep.PrevIsDefault,
-                            nextIsDefault: relevant.NextIsDefault);
-
-                        rep.Contents.AddRange(relevant.Contents);
-
-                        reps[idx] = rep;
+                            nextKey: rep.NextKey,
+                            prevIsDefault: relevant.PrevIsDefault,
+                            nextIsDefault: rep.NextIsDefault);
                     }
                 }
             }
 
+            var result = groups
+                .Select(g => g.ToArray()).ToList();
+
             return result;
         }
 
-        private static IEnumerable<Triplet<T, TKey>> GetTriplets<T, TKey>(this IEnumerable<IEnumerable<T>> sequences,
+        private static IEnumerable<Triplet<T, TKey>> GetTriplets<T, TKey>(this T[][] sequences,
             Func<T, TKey> keySelector)
         {
-            var result = new Dictionary<(TKey, TKey, TKey), Triplet<T, TKey>>();
+            // The key contains the "neighbor exists" flags, so that a real neighbor
+            // whose key equals default(TKey) is not mixed up with a missing neighbor.
+            var result = new Dictionary<(bool, TKey, TKey, bool, TKey), Triplet<T, TKey>>();
 
             foreach (var sequence in sequences)
             {
-                for (var index = 0; index < sequence.Count(); index++)
+                for (var index = 0; index < sequence.Length; index++)
                 {
-                    var previous = index > 0
-                        ? sequence.ElementAt(index - 1)
-                        : default;
+                    var prevIsDefault = index == 0;
+                    var nextIsDefault = index == sequence.Length - 1;
 
-                    var current = sequence.ElementAt(index);
+                    var previous = prevIsDefault
+                        ? default
+                        : sequence[index - 1];
+                    var current = sequence[index];
+                    var next = nextIsDefault
+                        ? default
+                        : sequence[index + 1];
 
-                    var next = index < sequence.Count() - 1
-                        ? sequence.ElementAt(index + 1)
-                        : default;
-
-                    bool prevIsDefault = previous.IsDefault();
-                    bool nextIsDefault = next.IsDefault();
-
-                    var prevKey = prevIsDefault ? default : keySelector(previous);
+                    var prevKey = prevIsDefault
+                        ? default
+                        : keySelector(previous);
                     var currKey = keySelector(current);
-                    var nextKey = nextIsDefault ? default : keySelector(next);
+                    var nextKey = nextIsDefault
+                        ? default
+                        : keySelector(next);
 
-                    var key = (prevKey, currKey, nextKey);
+                    var key = (prevIsDefault, prevKey, currKey, nextIsDefault, nextKey);
 
                     if (!result.TryGetValue(
                         key: key,
@@ -320,10 +308,6 @@ namespace SetExtensions
         private static bool IsCompatibleCrossing<T, TKey>(this Triplet<T, TKey> a, Triplet<T, TKey> b)
         {
             var cmp = EqualityComparer<TKey>.Default;
-
-            // trivial case: everything default -> no crossing
-            if (a.PrevIsDefault && a.NextIsDefault && b.PrevIsDefault && b.NextIsDefault)
-                return true;
 
             // a.prev == b.next ?
             if (!a.PrevIsDefault && !b.NextIsDefault && cmp.Equals(a.PrevKey, b.NextKey))
@@ -398,56 +382,6 @@ namespace SetExtensions
             return true;
         }
 
-        private static bool IsDefault<T>(this T value) => EqualityComparer<T>.Default.Equals(value, default);
-
         #endregion Private Methods
-
-        #region Private Structs
-
-        private readonly struct Triplet<T, TKey>
-        {
-            #region Public Constructors
-
-            public Triplet(T previous, T current, T next, TKey prevKey, TKey currKey, TKey nextKey,
-                bool prevIsDefault, bool nextIsDefault)
-            {
-                Previous = previous;
-                Current = current;
-                Next = next;
-                PrevKey = prevKey;
-                CurrKey = currKey;
-                NextKey = nextKey;
-                PrevIsDefault = prevIsDefault;
-                NextIsDefault = nextIsDefault;
-
-                Contents = new List<(T, T, T)>();
-            }
-
-            #endregion Public Constructors
-
-            #region Public Properties
-
-            public List<(T, T, T)> Contents { get; }
-
-            public T Current { get; }
-
-            public TKey CurrKey { get; }
-
-            public T Next { get; }
-
-            public bool NextIsDefault { get; }
-
-            public TKey NextKey { get; }
-
-            public T Previous { get; }
-
-            public bool PrevIsDefault { get; }
-
-            public TKey PrevKey { get; }
-
-            #endregion Public Properties
-        }
-
-        #endregion Private Structs
     }
 }
