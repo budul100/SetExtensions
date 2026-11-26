@@ -56,6 +56,6 @@ var groups = sequences.ToNeighborGroups(s => s);
 // yields [(null, "a", "b"), (null, "a", "b")], [("a", "b", null), ("a", "b", "c"), (null, "b", "c")], [("b", "c", null), ("b", "c", null)]
 ```
 
-## Notes
+## License
 
-License and contribution info: refer to the repository at https://github.com/budul100/SetExtensions.
+This project is licensed under the MIT License.
